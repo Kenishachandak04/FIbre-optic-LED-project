@@ -1,184 +1,97 @@
-/*Improvements -
-switching off LEDS when not needed 
-delay check with the final built
-brightness transitions needs to be smoother
-*/
 #include <FastLED.h>
-int sound=A0;
-#define NUM_LEDS 28
+#include <math.h>
+
+int sound = A0;
+#define NUM_LEDS 38
 #define DATA_PIN 7
+
+#define THRESHOLD 5
+
+// Define the array of leds
 CRGB leds[NUM_LEDS];
 
-void setup() { 
+int counter = 0;
+
+#define keeptrack 50
+int raw_array[keeptrack];
+float means_array[keeptrack];
+
+int mean = 0;
+
+float variance = 0.0;
+float prev_variance = 0.0;
+float variance_rate = 0.0;
+
+void setup() {
   Serial.begin(9600);
   FastLED.addLeds<WS2812B, DATA_PIN, RGB>(leds, NUM_LEDS);
-   for (int i=0;i<=NUM_LEDS;i++)
-  {
-    leds[i]= CRGB(255,255,255);
-
-  }
 }
 
-void loop() { 
-  float s=analogRead(A0);
-  s=map(s,0,1023,0,255);
-  Serial.println(s);
-  for (int i=0;i<=NUM_LEDS;i++)
-{
-  /*  
-  // If sound value is between 3 and 10, set LEDs to a specific color and show
-  if(soundValue == 3 && soundValue < 10) {
-    for each LED in steps of 8 {
-      Set LED color to a calculated value based on soundValue
-    }
-    Show LEDs
-  }
-  // If sound value is between 10 and 15, set LEDs to a specific color and show
-  else if(soundValue > 10 && soundValue < 15) {
-    for each LED in steps of 8 {
-      Set LED color to a calculated value based on soundValue
-    }
-    Show LEDs
-  }
-*/
-  if (s>15 && s<30){ //
-    for (int i=1;i<=NUM_LEDS;i+=8)
-   {
-      leds[i] = CRGB(s,30,(255-s));
-      FastLED.show();
-}}
-  else if (s>=30 && s<60){
-      for (int i=1;i<=NUM_LEDS;i+=8)
-    {
-        leds[i] = CRGB((s),s+10,255-s);
-        FastLED.show();
-    }}
-   else if (s>=60 && s<90){
-      for (int i=1;i<=NUM_LEDS;i+=8)
-    {
-        leds[i] = CRGB(s,s+20,255-s);
-        FastLED.show();
-    }}
-/*
-    else if (s>60 && s<70)
-    {
-      for (int i=1;i<=NUM_LEDS;i+=8){
-       slow transiotion colour map
+void loop() {
+  float a = analogRead(A0);
+  float s = a;
+  s = map(s, 0, 500, 0, 255);
 
+  raw_array[counter] = s;
+  mean = find_mean(raw_array);
+  means_array[counter] = mean;
+
+
+
+    counter++;
+    if (counter == keeptrack) {
+      // Calculate variance
+      prev_variance = variance;
+      variance = find_variance(raw_array);
+      variance_rate = (variance - prev_variance) / (float)keeptrack;
+      counter = 0;
+
+      Serial.println(variance_rate);
+      
+    if (abs(variance_rate) > THRESHOLD) {
+    // light up every 8th led
+    for (int i = 0; i <= NUM_LEDS; i++) {
+      if (i % 8 == 0) {
+        leds[i] = CRGB(s, 255 - s - variance_rate/10, s +variance_rate/10 );
+      } else {
+        leds[i] = CRGB(0, 0, 0);
+      }
+    }}
+
+    else{
+      for (int i = 0; i <= NUM_LEDS; i++) {
+      if (i % 1 == 0) {
+        leds[i] = CRGB(255, 255, 255);
+      } else {
+        leds[i] = CRGB(0, 0, 0);
       }
     }
-   else if (s>70 && s<80)
-   {
-    for (int i=1;i<=NUM_LEDS;i+=8){
-     slow transiotion colour map
     }
-  }
-   else if (s>80 && s<90){
-    for (int i=1;i<=NUM_LEDS;i+=8)
-    {
-      mapping colours 
-    }
-  }
-  else if (s>90 && s<100){
-    for (int i=1;i<=NUM_LEDS;i+=8)
-    {
-     clour map
-    } 
-  }*/
-  else if (s>=90 && s<120){
-    for (int i=1;i<=NUM_LEDS;i+=8)
-   {
-      leds[i] = CRGB((s+10),s+30,s+50);
-      FastLED.show();
-   }
-  }
-   /*else if (s>110 && s<120){
-    for (int i=1;i<=NUM_LEDS;i+=8)
-   {
-      colors need to be manpped 
-   }
-  }
-   else if (s>120 && s<130){
-    for (int i=1;i<=NUM_LEDS;i+=8){
-      
-   }mapping colors 
-  }
-  */
-  else if (s>=120 && s<150){
-   for (int i=1;i<=NUM_LEDS;i+=8)
-   {
-    leds[i] = CRGB((20+s),(45+s),s+30);
     FastLED.show();
-   }
-  }  
-   else if (s>=150 && s<200){
-    for (int i=1;i<=NUM_LEDS;i+=8)
-   {
-      leds[i] = CRGB((30+s),50+s,(45+s));
-      FastLED.show();
+    
     }
   }
-   else if (s>=200 && s<250){
-    for (int i=1;i<=NUM_LEDS;i+=8)
-    {
-      leds[i] = CRGB((40+s),(60+s),55+s);
-      FastLED.show();
-    }
+
+
+int zeros(int nums[]) {
+  for (int i = 0; i <= sizeof(nums) / sizeof(int); i++) {
+    nums[i] = 0;
   }
-   else if (s>=250 && s<300){
-    for (int i=1;i<=NUM_LEDS;i+=8)
-    {
-      leds[i] = CRGB(50+s,(70+s),10);
-      FastLED.show();
-    }
-  }
-   else if (s>=300 && s<350){
-    for (int i=1;i<=NUM_LEDS;i+=8)
-    {
-      leds[i] = CRGB((60+s),s+90,20);
-      FastLED.show();
-    }
-  }
-   else if (s>=350 && s<450){
-    for (int i=1;i<=NUM_LEDS;i+=8)
-   {
-      leds[i] = CRGB((80+s),(100+s),35);
-      FastLED.show();
-   }
-  }
-   else if (s>=450 && s<550){
-    for (int i=1;i<=NUM_LEDS;i+=8)
-   {
-      leds[i] = CRGB(90+s,s+10,50);
-      FastLED.show();
-   }
-  }
-   else if (s>=550 && s<650){
-    for (int i=1;i<=NUM_LEDS;i+=8)
-   {
-      leds[i] = CRGB(s+10,s,255-s);
-      FastLED.show();
-   }
-  }
-   else if (s>=650 && s<750){
-    for (int i=1;i<=NUM_LEDS;i+=8)
-    {
-      leds[i] = CRGB((s,(255-s),30));
-      FastLED.show();
-    }
-  }
-   else if (s>750 && s<800){
-    for (int i=1;i<=NUM_LEDS;i+=8)
-    {
-      leds[i] = CRGB((s,(10+s),10));
-      FastLED.show();
-    }
-  }
-  else 
-   {
-    FastLED.show();
-    }
-   delay(20);
-   s=0;
+  return nums;
 }
+
+int find_mean(int r_array[]) {
+  int sum = 0;
+  for (int i = 0; i < keeptrack; i++) {
+    sum += r_array[i];
+  }
+  return sum / keeptrack;
+}
+
+float find_variance(int r_array[]) {
+  float sum_sq_diff = 0.0;
+  for (int i = 0; i < keeptrack; i++) {
+    sum_sq_diff += pow((r_array[i] - mean), 2);
+  }
+  return sum_sq_diff / keeptrack;
 }
