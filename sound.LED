@@ -3,8 +3,9 @@
 #define NUM_LEDS 38
 #define DATA_PIN 7
 
-#define THRESHOLD 0.076
+#define THRESHOLD 2.5
 #define TRANSITION_DURATION 3000 // Duration of the color transition in milliseconds
+#define COOLDOWN_TIME 5000 // 5 seconds cooldown time after the threshold is crossed
 
 // Define the array of leds
 CRGB leds[NUM_LEDS];
@@ -24,6 +25,7 @@ float variance_rate = 0.0;
 CRGB prev_color = CRGB(150, 150, 150);
 CRGB target_color;
 unsigned long transition_start_time = 0;
+unsigned long last_crossed_time = 0; // Variable to store the time when the threshold was last crossed
 
 void setup() {
   Serial.begin(9600);
@@ -62,6 +64,19 @@ void loop() {
       prev_color.b += 1.5* variance_rate;
 
       transition_start_time = millis();
+      
+      last_crossed_time = millis(); // Update the last crossed time
+    }
+    else {
+      unsigned long current_time = millis();
+      // Check if cooldown time has passed since the last time threshold was crossed
+      if (current_time - last_crossed_time >= COOLDOWN_TIME) {
+        // Turn on all white lights
+        for (int i = 0; i < NUM_LEDS; i++) {
+          leds[i] = CRGB(150, 150, 150);
+        }
+        FastLED.show();
+      }
     }
   }
 
