@@ -1,6 +1,6 @@
 #include <FastLED.h>
 
-#define NUM_LEDS 38
+#define NUM_LEDS 128
 #define DATA_PIN 7
 
 #define THRESHOLD 2.5
@@ -84,8 +84,8 @@ void loop() {
   unsigned long elapsed_time = millis() - transition_start_time;
   if (elapsed_time < TRANSITION_DURATION) {
     float t = sin8((elapsed_time * PI) / TRANSITION_DURATION); // Using sin function for smooth transition
-    for (int i = 0; i < NUM_LEDS; i++) {
-      if (i % 8 == 0) {
+    for (int i = 1; i < NUM_LEDS; i++) {
+      if ((i-1) % 8 == 0) {
         leds[i] = CRGB(
           map(t, -1, 1, prev_color.r, target_color.r),
           map(t, -1, 1, prev_color.g, target_color.g),
