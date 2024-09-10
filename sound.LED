@@ -1,7 +1,5 @@
 #include <FastLED.h>
 
-//git commit gor test 1
-
 #define NUM_LEDS 128
 #define DATA_PIN 7
 
